@@ -46,7 +46,7 @@ public class BatteryChargeFetcher {
 
                 try {
                     // Acessa a página local
-                    driver.get("http://localhost:4027");
+                    driver.get("http://186.218.68.160:74");
 
                     // Define o tempo máximo de espera
                     WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
