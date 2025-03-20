@@ -1,20 +1,16 @@
 
 
-
-
-
-
 package padrao;
 
 
 //PegarDoHTML
+import java.time.Duration;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import java.time.Duration;
 
 
 //PegarDoAparelho
@@ -22,7 +18,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
-
+import java.io.InputStream;
 
 
 
@@ -36,17 +32,34 @@ public class BatteryChargeFetcher {
 
         switch (fonte) {
             case PEGAR_DO_HTML:
+            	
                 System.out.println("Selecionado: Pegar do HTML");
                 
-             // Configura o driver do Chrome (caminho para o ChromeDriver)
-                System.setProperty("webdriver.chrome.driver", "/opt/homebrew/bin/chromedriver");
+                // Configura o driver do Chrome (caminho para o ChromeDriver)
+                System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
+            	
 
                 // Inicia o WebDriver
-                WebDriver driver = new ChromeDriver();
+                WebDriver driver;
+                try {
+                	// Inicializa o ChormeDrive
+                	driver = new ChromeDriver();			
+        		} catch (Exception e) {
+        			// Executa o script de atualização do ChromeDriver
+                    try {
+        				executeChromeDriverUpdateScript();
+        			} catch (IOException e1) {
+        				// Caso o script não tenha sido executado com sucesso
+        				System.out.println("Erro ao tentar atualizar o ChromeDriver automaticamente:");
+        				e1.printStackTrace();
+        			}
+                    // Inicializa o ChormeDrive apos ter atualizado
+        			driver = new ChromeDriver();
+        		}
 
                 try {
                     // Acessa a página local
-                    driver.get("http://186.218.68.160:74");
+                    driver.get("http://localhost:4027");
 
                     // Define o tempo máximo de espera
                     WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -137,4 +150,55 @@ public class BatteryChargeFetcher {
             return "100";
         }
     }
+
+    
+    //Método que vai fazer o script rodar
+      private static void executeChromeDriverUpdateScript() throws IOException {
+      	// Executa o comando
+          try {
+              // Comando para obter a versão do ChromeDriver
+          	String[] commandVersao = {
+          		    "/bin/bash", "-c", "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --version"
+          		};
+
+              Process process = new ProcessBuilder(commandVersao).start();
+              String saidaDaExecucao = readStream(process.getInputStream()).trim();
+
+              System.out.println("A saída da execução é: " + saidaDaExecucao);
+
+              // Fazendo o split para pegar o número da versão
+              String[] partes = saidaDaExecucao.split(" ");
+              if (partes.length > 1) {
+                  String minhaVersaoDoChrome = partes[2]; // Número da versão
+
+                  // Comando para baixar e instalar o ChromeDriver correspondente
+                  String[] command = {
+                      "/bin/bash", "-c", 
+                      "VERSION=\"" + minhaVersaoDoChrome + "\" && curl -o chromedriver-mac.zip \"https://storage.googleapis.com/chrome-for-testing-public/$VERSION/mac-arm64/chromedriver-mac-arm64.zip\" && unzip chromedriver-mac.zip && mv chromedriver-mac-arm64/chromedriver /usr/local/bin/chromedriver && chmod +x /usr/local/bin/chromedriver && rm -rf chromedriver-mac-arm64 && rm -f chromedriver-mac.zip"
+                  };
+
+                  Process installProcess = new ProcessBuilder(command).start();
+                  installProcess.waitFor(); // Aguarda a instalação terminar
+
+                  System.out.println("ChromeDriver atualizado para a versão: " + minhaVersaoDoChrome);
+              }
+
+          } catch (IOException | InterruptedException e) {
+              e.printStackTrace();
+          }
+      }
+
+
+      // Método auxiliar para ler e capturar a saída do processo
+      private static String readStream(InputStream inputStream) throws IOException {
+          StringBuilder output = new StringBuilder();
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+              String line;
+              while ((line = reader.readLine()) != null) {
+                  output.append(line).append("\n");
+              }
+          }
+          return output.toString();
+      }
+    
 }
