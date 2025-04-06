@@ -9,7 +9,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 
@@ -19,6 +19,13 @@ import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
+
+
+//Escrever no arquivo o valor capturado do html
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+
 
 
 
@@ -45,7 +52,9 @@ public class BatteryChargeFetcher {
 		                WebDriver driver;
 		                try {
 		                	// Inicializa o ChormeDrive
-		                	driver = new ChromeDriver();			
+		                	ChromeOptions options = new ChromeOptions();
+		                	options.addArguments("--headless"); // modo invisível
+		                	driver = new ChromeDriver(options);
 		        		} catch (Exception e) {
 		        			// Executa o script de atualização do ChromeDriver
 		                    try {
@@ -66,16 +75,26 @@ public class BatteryChargeFetcher {
 		                    // Define o tempo máximo de espera
 		                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 		
-		                    // Espera até que o elemento com o atributo data-field="battery_charge" esteja visível
-		                    WebElement batteryChargeElement = wait.until(
-		                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("span[data-field='battery_charge']"))
-		                    );
+		                    // Espera até que o elemento com o atributo data-field="novo IP Global" esteja visível
+		                    WebElement ipExternalElement = driver.findElement(By.cssSelector("p[data-field='network_ipExternal']"));
 		
-		                    // Obtém o texto dentro do elemento (valor da bateria)
-		                    String batteryCharge = batteryChargeElement.getText();
+		                    // Obtém o texto dentro do elemento (valor do novo IP Global)
+		                    String ip = ipExternalElement.getText();
 		
-		                    // Exibe o valor da carga da bateria
-		                    System.out.println("Carga da Bateria: " + batteryCharge + "%");
+		                    // Exibe o valor do novo IP Global
+		                    System.out.println("IP Externo: " + ip);
+		                    
+		                    //Escreve o conteudo capturado do html em um arquivo txt
+		                    if (!ip.equals("")) {
+		                    	try {
+		                    		Files.write(
+		                    				Paths.get("/Users/brenomedeiros/Library/Mobile Documents/com~apple~CloudDocs/Servidor/ipExterno.txt"),
+		                    				ip.getBytes(StandardCharsets.UTF_8)
+		                    				);
+		                    	} catch (IOException e) {
+		                    		e.printStackTrace();
+		                    	}
+							}
 		
 		                } catch (Exception e) {
 		                    e.printStackTrace();
@@ -98,8 +117,8 @@ public class BatteryChargeFetcher {
 		                break;
 	    		}
 	
-	            // Aguarda 30 minutos (1800000 milissegundos)
-	    		long millis = (30*60*1000);
+	            // Aguarda 1 minuto (calcular conversao para milisegundos)
+	    		long millis = (1*60*1000);
 	            Thread.sleep(millis);
 	    	}
     	
