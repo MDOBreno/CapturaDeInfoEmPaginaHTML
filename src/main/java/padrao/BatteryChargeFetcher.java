@@ -29,73 +29,86 @@ public class BatteryChargeFetcher {
     	
     	
     	TipoFonte fonte = TipoFonte.PEGAR_DO_HTML;
-
-        switch (fonte) {
-            case PEGAR_DO_HTML:
-            	
-                System.out.println("Selecionado: Pegar do HTML");
-                
-                // Configura o driver do Chrome (caminho para o ChromeDriver)
-                System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-            	
-
-                // Inicia o WebDriver
-                WebDriver driver;
-                try {
-                	// Inicializa o ChormeDrive
-                	driver = new ChromeDriver();			
-        		} catch (Exception e) {
-        			// Executa o script de atualização do ChromeDriver
-                    try {
-        				executeChromeDriverUpdateScript();
-        			} catch (IOException e1) {
-        				// Caso o script não tenha sido executado com sucesso
-        				System.out.println("Erro ao tentar atualizar o ChromeDriver automaticamente:");
-        				e1.printStackTrace();
-        			}
-                    // Inicializa o ChormeDrive apos ter atualizado
-        			driver = new ChromeDriver();
-        		}
-
-                try {
-                    // Acessa a página local
-                    driver.get("http://localhost:4027");
-
-                    // Define o tempo máximo de espera
-                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-
-                    // Espera até que o elemento com o atributo data-field="battery_charge" esteja visível
-                    WebElement batteryChargeElement = wait.until(
-                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("span[data-field='battery_charge']"))
-                    );
-
-                    // Obtém o texto dentro do elemento (valor da bateria)
-                    String batteryCharge = batteryChargeElement.getText();
-
-                    // Exibe o valor da carga da bateria
-                    System.out.println("Carga da Bateria: " + batteryCharge + "%");
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    // Fecha o navegador
-                    driver.quit();
-                }
-                
-                break;
-            case PEGAR_DO_APARELHO:
-                System.out.println("Selecionado: Pegar do Aparelho");
-                
-                try {
-                    String batteryCapacity = getBatteryCapacity();
-                    System.out.println("Battery Capacity: " + batteryCapacity + "%");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                
-                break;
+    	
+    	try {
+	    	while(true) {
+	    		switch (fonte) {
+		            case PEGAR_DO_HTML:
+		            	
+		                System.out.println("Selecionado: Pegar do HTML");
+		                
+		                // Configura o driver do Chrome (caminho para o ChromeDriver)
+		                System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
+		            	
+		
+		                // Inicia o WebDriver
+		                WebDriver driver;
+		                try {
+		                	// Inicializa o ChormeDrive
+		                	driver = new ChromeDriver();			
+		        		} catch (Exception e) {
+		        			// Executa o script de atualização do ChromeDriver
+		                    try {
+		        				executeChromeDriverUpdateScript();
+		        			} catch (IOException e1) {
+		        				// Caso o script não tenha sido executado com sucesso
+		        				System.out.println("Erro ao tentar atualizar o ChromeDriver automaticamente:");
+		        				e1.printStackTrace();
+		        			}
+		                    // Inicializa o ChormeDrive apos ter atualizado
+		        			driver = new ChromeDriver();
+		        		}
+		
+		                try {
+		                    // Acessa a página local
+		                    driver.get("http://localhost:4027");
+		
+		                    // Define o tempo máximo de espera
+		                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		
+		                    // Espera até que o elemento com o atributo data-field="battery_charge" esteja visível
+		                    WebElement batteryChargeElement = wait.until(
+		                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("span[data-field='battery_charge']"))
+		                    );
+		
+		                    // Obtém o texto dentro do elemento (valor da bateria)
+		                    String batteryCharge = batteryChargeElement.getText();
+		
+		                    // Exibe o valor da carga da bateria
+		                    System.out.println("Carga da Bateria: " + batteryCharge + "%");
+		
+		                } catch (Exception e) {
+		                    e.printStackTrace();
+		                } finally {
+		                    // Fecha o navegador
+		                    driver.quit();
+		                }
+		                
+		                break;
+		            case PEGAR_DO_APARELHO:
+		                System.out.println("Selecionado: Pegar do Aparelho");
+		                
+		                try {
+		                    String batteryCapacity = getBatteryCapacity();
+		                    System.out.println("Battery Capacity: " + batteryCapacity + "%");
+		                } catch (IOException e) {
+		                    e.printStackTrace();
+		                }
+		                
+		                break;
+	    		}
+	
+	            // Aguarda 30 minutos (1800000 milissegundos)
+	    		long millis = (30*60*1000);
+	            Thread.sleep(millis);
+	    	}
+    	
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-    }
+	}
+        
+    
     
     
     private static String getBatteryCapacity() throws IOException {
