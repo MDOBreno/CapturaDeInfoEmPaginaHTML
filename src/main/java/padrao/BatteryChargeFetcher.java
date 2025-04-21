@@ -11,6 +11,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 
 //PegarDoAparelho
@@ -55,6 +56,7 @@ public class BatteryChargeFetcher {
 		                	ChromeOptions options = new ChromeOptions();
 		                	options.addArguments("--headless"); // modo invisível
 		                	driver = new ChromeDriver(options);
+		                    driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(20));
 		        		} catch (Exception e) {
 		        			// Executa o script de atualização do ChromeDriver
 		                    try {
@@ -73,10 +75,13 @@ public class BatteryChargeFetcher {
 		                    driver.get("http://localhost:4027");
 		
 		                    // Define o tempo máximo de espera
-		                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 		
-		                    // Espera até que o elemento com o atributo data-field="novo IP Global" esteja visível
-		                    WebElement ipExternalElement = driver.findElement(By.cssSelector("p[data-field='network_ipExternal']"));
+		                    // Espera até que o elemento com o atributo data-field="novo IP Global" esteja visível e com conteúdo
+		                    WebElement ipExternalElement = wait.until(webDriver -> {
+		                        WebElement element = webDriver.findElement(By.cssSelector("p[data-field='network_ipExternal']"));
+		                        return element.isDisplayed() && !element.getText().isEmpty() ? element : null;
+		                    });
 		
 		                    // Obtém o texto dentro do elemento (valor do novo IP Global)
 		                    String ip = ipExternalElement.getText();
