@@ -91,14 +91,26 @@ public class BatteryChargeFetcher {
 		                    
 		                    //Escreve o conteudo capturado do html em um arquivo txt
 		                    if (!ip.equals("")) {
-		                    	try {
-		                    		Files.write(
-		                    				Paths.get("/Users/brenomedeiros/Library/Mobile Documents/com~apple~CloudDocs/Servidor/ipExterno.txt"),
-		                    				ip.getBytes(StandardCharsets.UTF_8)
-		                    				);
-		                    	} catch (IOException e) {
-		                    		e.printStackTrace();
-		                    	}
+		                    	
+		                    	if (ip.equals("offline")) {
+		                    		try {
+		                    		    reiniciarOiStatistica();
+		                    		    System.out.println("iStatistica reiniciado com sucesso.");
+		                    		} catch (IOException e) {
+		                    		    System.out.println("Erro ao tentar reiniciar o iStatistica.");
+		                    		    e.printStackTrace();
+		                    		}
+		                    		continue;
+								} else {
+									try {
+										Files.write(
+												Paths.get("/Users/brenomedeiros/Library/Mobile Documents/com~apple~CloudDocs/Servidor/ipExterno.txt"),
+												ip.getBytes(StandardCharsets.UTF_8)
+												);
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
 							}
 		
 		                } catch (Exception e) {
@@ -190,52 +202,107 @@ public class BatteryChargeFetcher {
 
     
     //Método que vai fazer o script rodar
-      private static void executeChromeDriverUpdateScript() throws IOException {
-      	// Executa o comando
-          try {
-              // Comando para obter a versão do ChromeDriver
-          	String[] commandVersao = {
-          		    "/bin/bash", "-c", "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --version"
-          		};
+    private static void executeChromeDriverUpdateScript() throws IOException {
+    	// Executa o comando
+        try {
+            // Comando para obter a versão do ChromeDriver
+        	String[] commandVersao = {
+        		    "/bin/bash", "-c", "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --version"
+        		};
 
-              Process process = new ProcessBuilder(commandVersao).start();
-              String saidaDaExecucao = readStream(process.getInputStream()).trim();
+            Process process = new ProcessBuilder(commandVersao).start();
+            String saidaDaExecucao = readStream(process.getInputStream()).trim();
 
-              System.out.println("A saída da execução é: " + saidaDaExecucao);
+            System.out.println("A saída da execução é: " + saidaDaExecucao);
 
-              // Fazendo o split para pegar o número da versão
-              String[] partes = saidaDaExecucao.split(" ");
-              if (partes.length > 1) {
-                  String minhaVersaoDoChrome = partes[2]; // Número da versão
+            // Fazendo o split para pegar o número da versão
+            String[] partes = saidaDaExecucao.split(" ");
+            if (partes.length > 1) {
+                String minhaVersaoDoChrome = partes[2]; // Número da versão
 
-                  // Comando para baixar e instalar o ChromeDriver correspondente
-                  String[] command = {
-                      "/bin/bash", "-c", 
-                      "VERSION=\"" + minhaVersaoDoChrome + "\" && curl -o chromedriver-mac.zip \"https://storage.googleapis.com/chrome-for-testing-public/$VERSION/mac-arm64/chromedriver-mac-arm64.zip\" && unzip chromedriver-mac.zip && mv chromedriver-mac-arm64/chromedriver /usr/local/bin/chromedriver && chmod +x /usr/local/bin/chromedriver && rm -rf chromedriver-mac-arm64 && rm -f chromedriver-mac.zip"
-                  };
+                // Comando para baixar e instalar o ChromeDriver correspondente
+                String[] command = {
+                    "/bin/bash", "-c", 
+                    "VERSION=\"" + minhaVersaoDoChrome + "\" && curl -o chromedriver-mac.zip \"https://storage.googleapis.com/chrome-for-testing-public/$VERSION/mac-arm64/chromedriver-mac-arm64.zip\" && unzip chromedriver-mac.zip && mv chromedriver-mac-arm64/chromedriver /usr/local/bin/chromedriver && chmod +x /usr/local/bin/chromedriver && rm -rf chromedriver-mac-arm64 && rm -f chromedriver-mac.zip"
+                };
 
-                  Process installProcess = new ProcessBuilder(command).start();
-                  installProcess.waitFor(); // Aguarda a instalação terminar
+                Process installProcess = new ProcessBuilder(command).start();
+                installProcess.waitFor(); // Aguarda a instalação terminar
 
-                  System.out.println("ChromeDriver atualizado para a versão: " + minhaVersaoDoChrome);
-              }
+                System.out.println("ChromeDriver atualizado para a versão: " + minhaVersaoDoChrome);
+            }
 
-          } catch (IOException | InterruptedException e) {
-              e.printStackTrace();
-          }
-      }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //Método que vai fazer o script rodar
+    private static void executeAbrirOiStatistica() throws IOException {
+        // O comando para abrir o aplicativo iStatistica
+        String[] command = {
+                "/bin/bash", "-c", "open -a \"iStatistica\""
+        };
+
+        // Executa o comando
+        Process process = new ProcessBuilder(command).start();
+        String saidaDaExecucao = readStream(process.getInputStream());
+//        System.out.println("A saidaDaExecucao é: " + saidaDaExecucao);
+
+        // Espera o processo terminar
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new IOException("Erro ao executar o comando para abrir o iStatistica.");
+            }
+        } catch (InterruptedException e) {
+            throw new IOException("Erro ao aguardar o término do comando para abrir o iStatistica.", e);
+        }
+    }
+    
+    private static void fecharOiStatistica() throws IOException {
+        String[] command = {
+                "/bin/bash", "-c", "pkill -f iStatistica"
+        };
+
+        Process process = new ProcessBuilder(command).start();
+        String saidaDaExecucao = readStream(process.getInputStream());
+
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new IOException("Erro ao executar o comando para fechar o iStatistica.");
+            }
+        } catch (InterruptedException e) {
+            throw new IOException("Erro ao aguardar o término do comando para fechar o iStatistica.", e);
+        }
+    }
+    
+    private static void reiniciarOiStatistica() throws IOException {
+        fecharOiStatistica();
+        
+        // Espera 5 segundos
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new IOException("Erro ao esperar 5 segundos antes de reabrir o iStatistica", e);
+        }
+        
+        // Reabre o app
+        executeAbrirOiStatistica();
+    }
 
 
-      // Método auxiliar para ler e capturar a saída do processo
-      private static String readStream(InputStream inputStream) throws IOException {
-          StringBuilder output = new StringBuilder();
-          try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-              String line;
-              while ((line = reader.readLine()) != null) {
-                  output.append(line).append("\n");
-              }
-          }
-          return output.toString();
-      }
+	// Método auxiliar para ler e capturar a saída do processo
+	private static String readStream(InputStream inputStream) throws IOException {
+		StringBuilder output = new StringBuilder();
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				output.append(line).append("\n");
+          	}
+      	}
+      	return output.toString();
+ 	}
     
 }
