@@ -111,6 +111,9 @@ public class BatteryChargeFetcher {
 										e.printStackTrace();
 									}
 								}
+							} else {
+								//Se veio string vazia tente pegar de novo agora em vez de esperar 1 minuto
+								continue;
 							}
 		
 		                } catch (Exception e) {
